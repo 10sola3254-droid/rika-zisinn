@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>地震計算マスター | 中学１年 理科</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d141b;
+  --panel:#1b2530;
+  --panel-alt:#223040;
+  --panel-raise:#283848;
+  --ink:#e7ecf2;
+  --ink-dim:#93a2b3;
+  --amber:#f5b435;
+  --amber-dim:#8a672a;
+  --coral:#ef5b48;
+  --coral-dim:#7a3931;
+  --teal:#33c7b0;
+  --line:#2e3d4d;
+  --danger:#ef5b48;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(245,180,53,0.06), transparent 60%),
+    radial-gradient(1000px 500px at -10% 10%, rgba(51,199,176,0.05), transparent 60%),
+    var(--bg);
+  color:var(--ink);
+  font-family:'Zen Kaku Gothic New', sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+h1,h2,h3{font-family:'Kaisei Decol', serif; margin:0;}
+.mono{font-family:'JetBrains Mono', monospace;}
+button{font-family:inherit;}
+
+/* ===== header ===== */
+.tape-wrap{
+  overflow:hidden; height:34px; background:#0a1015; border-bottom:1px solid var(--line);
+}
+.tape{
+  display:flex; align-items:center; height:34px; white-space:nowrap;
+  animation: scrollTape 22s linear infinite;
+  color:var(--ink-dim); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1px;
+}
+.tape svg{height:20px; margin:0 18px; opacity:.8;}
+@keyframes scrollTape{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+
+.appheader{
+  padding:18px 22px 14px; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  border-bottom:1px solid var(--line);
+}
+.appheader .eyebrow{color:var(--amber); font-size:12px; letter-spacing:3px; font-weight:700; margin-bottom:4px;}
+.appheader h1{font-size:28px; color:var(--ink);}
+.appheader h1 span{color:var(--amber);}
+.statbar{display:flex; gap:10px; flex-wrap:wrap;}
+.stat-chip{
+  background:var(--panel-alt); border:1px solid var(--line); border-radius:999px;
+  padding:8px 16px; display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-dim);
+}
+.stat-chip b{color:var(--amber); font-family:'JetBrains Mono',monospace; font-size:15px;}
+.stat-chip.badge-chip b{color:var(--teal);}
+
+/* ===== tabs ===== */
+.tabnav{
+  display:flex; gap:2px; padding:0 22px; background:var(--panel); border-bottom:1px solid var(--line);
+  overflow-x:auto;
+}
+.tabbtn{
+  background:none; border:none; color:var(--ink-dim); padding:14px 18px; cursor:pointer;
+  font-size:14px; font-weight:700; border-bottom:3px solid transparent; white-space:nowrap;
+  display:flex; align-items:center; gap:8px;
+}
+.tabbtn .num{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim); opacity:.7;}
+.tabbtn.active{color:var(--amber); border-bottom-color:var(--amber);}
+.tabbtn.active .num{color:var(--amber); opacity:1;}
+.tabbtn:hover{color:var(--ink);}
+
+main{max-width:980px; margin:0 auto; padding:22px; padding-bottom:80px;}
+.panel{display:none;}
+.panel.active{display:block; animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+.card{
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px; margin-bottom:18px;
+}
+.card h2{font-size:20px; margin-bottom:6px;}
+.card h2 .tag{
+  display:inline-block; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--bg);
+  background:var(--amber); border-radius:6px; padding:2px 8px; margin-right:10px; vertical-align:middle;
+}
+.subtext{color:var(--ink-dim); font-size:13.5px; line-height:1.7; margin-bottom:14px;}
+hr.line{border:none; border-top:1px dashed var(--line); margin:16px 0;}
+
+/* ===== simulator ===== */
+.simgrid{display:grid; grid-template-columns:1fr; gap:18px;}
+@media(min-width:760px){ .simgrid{grid-template-columns: 1.15fr 0.85fr;} }
+.slider-row{margin-bottom:16px;}
+.slider-row label{display:flex; justify-content:space-between; font-size:13px; color:var(--ink-dim); margin-bottom:6px;}
+.slider-row label b{color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:14px;}
+input[type=range]{
+  -webkit-appearance:none; width:100%; height:6px; border-radius:4px; background:var(--panel-alt); outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--amber);
+  border:3px solid #0d141b; cursor:pointer; box-shadow:0 0 0 2px var(--amber);
+}
+input[type=range]::-moz-range-thumb{
+  width:22px; height:22px; border-radius:50%; background:var(--amber); border:3px solid #0d141b; cursor:pointer;
+}
+.readout-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+.readout{
+  background:#0a1015; border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+}
+.readout .rl{font-size:11px; color:var(--ink-dim); letter-spacing:1px;}
+.readout .rv{font-family:'JetBrains Mono',monospace; font-size:19px; margin-top:2px;}
+.readout.p .rv{color:var(--amber);}
+.readout.s .rv{color:var(--coral);}
+.readout.dur .rv{color:var(--teal);}
+svg.graph{width:100%; height:auto; background:#0a1015; border-radius:10px; border:1px solid var(--line);}
+
+/* ===== explanation ===== */
+.method-tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.method-tabs button{
+  background:var(--panel-alt); border:1px solid var(--line); color:var(--ink-dim);
+  padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700;
+}
+.method-tabs button.active{background:var(--amber); color:#241a03; border-color:var(--amber);}
+.example-table{width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px;}
+.example-table th,.example-table td{
+  border:1px solid var(--line); padding:8px 10px; text-align:center;
+}
+.example-table th{background:var(--panel-alt); color:var(--ink-dim); font-weight:700; font-size:12px;}
+.example-table td.mono{font-family:'JetBrains Mono',monospace;}
+.solution-box{
+  background:#0a1015; border-left:3px solid var(--amber); border-radius:8px; padding:14px 16px; margin-top:10px;
+  font-size:14px; line-height:2;
+}
+.solution-box .eq{font-family:'JetBrains Mono',monospace; color:var(--teal); display:block; margin:4px 0;}
+
+/* ===== questions (drill/test) ===== */
+.qtag{
+  display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:1px; font-weight:700;
+  padding:4px 10px; border-radius:999px; margin-bottom:10px;
+}
+.qtag.p1{background:var(--amber-dim); color:var(--amber);}
+.qtag.p2{background:#2a4130; color:var(--teal);}
+.qtag.p3{background:var(--coral-dim); color:#ffb2a6;}
+.qtag.p4{background:#2a3350; color:#9db4ff;}
+
+.answer-field{
+  background:#0a1015; border:2px solid var(--line); border-radius:8px; color:var(--ink);
+  font-family:'JetBrains Mono',monospace; font-size:18px; padding:10px 12px; width:170px; text-align:center;
+  margin-right:8px; margin-bottom:8px;
+}
+.answer-field:focus{border-color:var(--amber); outline:none;}
+.answer-field.correct{border-color:var(--teal); background:#0d1f1c;}
+.answer-field.wrong{border-color:var(--coral); background:#241110;}
+.answer-unit{color:var(--ink-dim); font-size:13px; margin-right:14px;}
+.field-row{display:flex; flex-wrap:wrap; align-items:center; margin-bottom:6px;}
+
+.keypad{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:280px; margin-top:14px;
+}
+.keypad button{
+  background:var(--panel-alt); border:1px solid var(--line); color:var(--ink);
+  border-radius:10px; padding:14px 0; font-size:18px; font-weight:700; cursor:pointer;
+  font-family:'JetBrains Mono',monospace;
+}
+.keypad button:active{background:var(--amber); color:#241a03;}
+.keypad button.wide{grid-column:span 1;}
+.keypad button.func{color:var(--coral); font-size:14px;}
+
+.btn{
+  background:var(--amber); color:#241a03; border:none; border-radius:8px; padding:12px 22px;
+  font-weight:900; font-size:14px; cursor:pointer; letter-spacing:.5px;
+}
+.btn.secondary{background:var(--panel-alt); color:var(--ink); border:1px solid var(--line);}
+.btn:disabled{opacity:.4; cursor:not-allowed;}
+.btn-row{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+
+.feedback-banner{
+  border-radius:8px; padding:10px 14px; margin-top:12px; font-weight:700; font-size:14px; display:none;
+}
+.feedback-banner.show{display:block;}
+.feedback-banner.ok{background:#0d1f1c; color:var(--teal); border:1px solid var(--teal);}
+.feedback-banner.ng{background:#241110; color:var(--coral); border:1px solid var(--coral);}
+
+.progress-dots{display:flex; gap:6px; margin-bottom:14px;}
+.progress-dots span{
+  width:26px; height:6px; border-radius:4px; background:var(--panel-alt); border:1px solid var(--line);
+}
+.progress-dots span.done{background:var(--teal); border-color:var(--teal);}
+.progress-dots span.current{background:var(--amber); border-color:var(--amber);}
+.progress-dots span.miss{background:var(--coral); border-color:var(--coral);}
+
+.rank-badge{
+  font-family:'Kaisei Decol',serif; font-size:64px; font-weight:700; text-align:center;
+  width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  margin:0 auto 16px; border:4px solid var(--amber); color:var(--amber);
+}
+.badge-unlock{
+  display:flex; align-items:center; gap:12px; background:var(--panel-alt); border:1px solid var(--teal);
+  border-radius:10px; padding:12px 14px; margin-top:10px;
+}
+.badge-unlock .ic{font-size:26px;}
+.badge-list{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px; margin-top:10px;}
+.badge-card{
+  background:var(--panel-alt); border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center;
+  font-size:12px; color:var(--ink-dim);
+}
+.badge-card.unlocked{border-color:var(--amber); color:var(--ink);}
+.badge-card .ic{font-size:26px; display:block; margin-bottom:6px; filter:grayscale(1); opacity:.4;}
+.badge-card.unlocked .ic{filter:none; opacity:1;}
+
+footer{
+  text-align:center; color:var(--ink-dim); font-size:12px; padding:20px; border-top:1px solid var(--line);
+}
+</style>
+</head>
+<body>
+
+<div class="tape-wrap">
+  <div class="tape mono" id="tapeStrip"></div>
+</div>
+
+<header class="appheader">
+  <div>
+    <div class="eyebrow">中学１年 理科 ・ 地震分野</div>
+    <h1>地震計算<span>マスター</span></h1>
+  </div>
+  <div class="statbar">
+    <div class="stat-chip">💠 ポイント <b id="hdrPoints">0</b></div>
+    <div class="stat-chip badge-chip">🏅 バッジ <b id="hdrBadges">0</b>/6</div>
+  </div>
+</header>
+
+<nav class="tabnav">
+  <button class="tabbtn active" data-tab="sim"><span class="num">01</span> シミュレーター</button>
+  <button class="tabbtn" data-tab="learn"><span class="num">02</span> ていねい解説</button>
+  <button class="tabbtn" data-tab="drill"><span class="num">03</span> 練習ドリル</button>
+  <button class="tabbtn" data-tab="test"><span class="num">04</span> 力試しテスト</button>
+</nav>
+
+<main>
+
+  <!-- ===================== TAB 1: SIMULATOR ===================== -->
+  <section class="panel active" id="panel-sim">
+    <div class="card">
+      <h2><span class="tag">SIMULATOR</span>波の伝わり方をスライダーで体感しよう</h2>
+      <p class="subtext">P波・S波の速さと観測点までの距離を変えると、グラフと到着時刻がリアルタイムで変わります。「距離 ÷ 時間 ＝ 速さ」の意味を目で確かめましょう。</p>
+      <div class="simgrid">
+        <div>
+          <svg class="graph" id="simGraph" viewBox="0 0 460 300"></svg>
+          <div class="readout-grid">
+            <div class="readout p"><div class="rl">P波 到着時刻</div><div class="rv mono" id="roPArrive">-</div></div>
+            <div class="readout s"><div class="rl">S波 到着時刻</div><div class="rv mono" id="roSArrive">-</div></div>
+            <div class="readout dur"><div class="rl">初期微動継続時間</div><div class="rv mono" id="roDur">-</div></div>
+            <div class="readout"><div class="rl">観測点までの距離</div><div class="rv mono" id="roDist">-</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="slider-row">
+            <label>P波の速さ <b id="lblVp">8 km/s</b></label>
+            <input type="range" id="slVp" min="4" max="12" step="1" value="8">
+          </div>
+          <div class="slider-row">
+            <label>S波の速さ <b id="lblVs">4 km/s</b></label>
+            <input type="range" id="slVs" min="2" max="8" step="1" value="4">
+          </div>
+          <div class="slider-row">
+            <label>観測点までの震源距離 <b id="lblDist">160 km</b></label>
+            <input type="range" id="slDist" min="20" max="300" step="10" value="160">
+          </div>
+          <div class="slider-row">
+            <label>経過時間（アニメ確認用） <b id="lblT">0 秒</b></label>
+            <input type="range" id="slT" min="0" max="45" step="1" value="0">
+          </div>
+          <hr class="line">
+          <p class="subtext" style="margin-bottom:0;">💡 グラフの傾きが急なほど速い波です。P波の直線とS波の直線の間（黄色〜赤の帯）が「初期微動継続時間」で、震源から遠いほど幅が広くなります。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 2: EXPLANATION ===================== -->
+  <section class="panel" id="panel-learn">
+    <div class="card">
+      <h2><span class="tag">LEARN</span>計算のパターンは４つ</h2>
+      <p class="subtext">地震の計算問題は、実はやり方が決まった４パターンしかありません。順番に確認していきましょう。</p>
+      <div class="method-tabs" id="methodTabs">
+        <button class="active" data-m="1">① P波とS波の速さ</button>
+        <button data-m="2">② 地震発生時刻</button>
+        <button data-m="3">③ 初期微動継続時間</button>
+        <button data-m="4">④ 比例式</button>
+      </div>
+      <div id="methodBody"></div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 3: DRILL ===================== -->
+  <section class="panel" id="panel-drill">
+    <div class="card">
+      <h2><span class="tag">DRILL</span>練習問題ドリル（自動生成）</h2>
+      <p class="subtext">「もんだいを出す」を押すたびに、割り切れるきれいな数値で新しい問題が作られます。答えたら「こたえ合わせ」で確認しましょう。</p>
+      <div id="drillArea"></div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 4: TEST ===================== -->
+  <section class="panel" id="panel-test">
+    <div class="card">
+      <h2><span class="tag">TEST</span>力試し確認テスト（全５問）</h2>
+      <div id="testArea"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>地震計算マスター ｜ すべての計算はブラウザ内で完結（通信・サーバー不要）｜ 記録は端末のブラウザに保存されます</footer>
+
+<script>
+/* =========================================================================
+   UTILITIES
+   ========================================================================= */
+const rnd = (min,max)=> Math.floor(Math.random()*(max-min+1))+min;
+const choice = arr => arr[Math.floor(Math.random()*arr.length)];
+const pad2 = n => String(n).padStart(2,'0');
+const gcd = (a,b)=> b===0?a:gcd(b,a%b);
+
+function addSeconds(base, sec){
+  let total = base.h*3600+base.m*60+base.s+sec;
+  total = ((total % 86400)+86400)%86400;
+  return {h:Math.floor(total/3600), m:Math.floor((total%3600)/60), s:total%60};
+}
+function clockToSec(t){ return t.h*3600+t.m*60+t.s; }
+function fmtClock(t){ return `${t.h}時${pad2(t.m)}分${pad2(t.s)}秒`; }
+function fmtClockShort(t){ return `${pad2(t.h)}:${pad2(t.m)}:${pad2(t.s)}`; }
+
+// Parse flexible time input -> seconds since 0:00:00, or null if invalid
+function parseTimeInput(str){
+  if(str==null) return null;
+  str = String(str).trim();
+  if(str==='') return null;
+  let digits;
+  if(/^[0-9]{5,6}$/.test(str)){
+    str = str.padStart(6,'0');
+    digits = [str.slice(0,2), str.slice(2,4), str.slice(4,6)];
+  } else {
+    let s = str.replace(/時|：/g, ':').replace(/分/g, ':').replace(/秒/g, '');
+    s = s.replace(/[^0-9:]/g,'');
+    digits = s.split(':').filter(x=>x!=='');
+  }
+  if(digits.length!==3) return null;
+  const h=parseInt(digits[0],10), m=parseInt(digits[1],10), s=parseInt(digits[2],10);
+  if([h,m,s].some(v=>isNaN(v))) return null;
+  return h*3600+m*60+s;
+}
+// Parse flexible numeric input (km, km/s, s) -> float or null
+function parseNumInput(str){
+  if(str==null) return null;
+  let s = String(str).trim();
+  s = s.replace(/km\/s|km|秒|ｋｍ\/ｓ/gi,'').trim();
+  s = s.replace(/[^\d.\-]/g,'');
+  if(s==='') return null;
+  const v = parseFloat(s);
+  return isNaN(v)?null:v;
+}
+function approxEq(a,b,eps=0.05){ return Math.abs(a-b) <= eps; }
+
+/* =========================================================================
+   STORAGE / GAMIFICATION
+   ========================================================================= */
+const STORE_KEY = 'jishin_master_state_v1';
+const BADGE_DEFS = [
+  {id:'pwave_star', name:'P波スピードスターSTAR', icon:'⚡', need:5, pattern:1, desc:'①速さの問題に5問正解'},
+  {id:'origin_master', name:'震源地特定マスター', icon:'🎯', need:5, pattern:2, desc:'②発生時刻の問題に5問正解'},
+  {id:'duration_master', name:'初期微動マスター', icon:'⏱️', need:5, pattern:3, desc:'③継続時間の問題に5問正解'},
+  {id:'ratio_master', name:'比例式マスター', icon:'📐', need:5, pattern:4, desc:'④比例式の問題に5問正解'},
+  {id:'perfect_test', name:'満点ハンター', icon:'🏆', need:1, pattern:'perfecttest', desc:'確認テストで満点をとる'},
+  {id:'doctor', name:'地震博士', icon:'🎓', need:500, pattern:'points', desc:'累計500ポイント達成'},
+];
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) throw new Error('none');
+    const st = JSON.parse(raw);
+    st.points = st.points||0;
+    st.badges = st.badges||[];
+    st.stats = st.stats||{1:0,2:0,3:0,4:0};
+    return st;
+  }catch(e){
+    return {points:0, badges:[], stats:{1:0,2:0,3:0,4:0}};
+  }
+}
+let STATE = loadState();
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); }
+  catch(e){ /* storage unavailable (e.g. preview sandbox) - continue in-memory */ }
+  renderHeaderStats();
+}
+function renderHeaderStats(){
+  document.getElementById('hdrPoints').textContent = STATE.points;
+  document.getElementById('hdrBadges').textContent = STATE.badges.length;
+}
+function addPoints(n){ STATE.points += n; saveState(); }
+function registerCorrect(pattern){
+  STATE.stats[pattern] = (STATE.stats[pattern]||0)+1;
+  checkBadges();
+}
+let pendingBadgePopup = [];
+function checkBadges(){
+  BADGE_DEFS.forEach(b=>{
+    if(STATE.badges.includes(b.id)) return;
+    let got=false;
+    if(typeof b.pattern==='number'){
+      got = (STATE.stats[b.pattern]||0) >= b.need;
+    } else if(b.pattern==='points'){
+      got = STATE.points >= b.need;
+    } else if(b.pattern==='perfecttest'){
+      got = STATE._perfectTest === true;
+    }
+    if(got){
+      STATE.badges.push(b.id);
+      pendingBadgePopup.push(b);
+    }
+  });
+  saveState();
+}
+function flushBadgePopups(container){
+  if(pendingBadgePopup.length===0) return;
+  pendingBadgePopup.forEach(b=>{
+    const div = document.createElement('div');
+    div.className='badge-unlock';
+    div.innerHTML = `<div class="ic">${b.icon}</div><div><b>バッジ獲得！「${b.name}」</b><br><span style="color:var(--ink-dim); font-size:12px;">${b.desc}</span></div>`;
+    container.appendChild(div);
+  });
+  pendingBadgePopup = [];
+}
+
+/* =========================================================================
+   TAB NAVIGATION
+   ========================================================================= */
+document.querySelectorAll('.tabbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* =========================================================================
+   SEISMOGRAPH TAPE (decorative header strip)
+   ========================================================================= */
+(function buildTape(){
+  function wig(seed){
+    let d = 'M0 17 ';
+    for(let x=0; x<=200; x+=4){
+      const amp = (x>60 && x<140) ? 14 : 2;
+      const y = 17 + Math.sin((x+seed)/6)*amp*Math.random()*0.6 + Math.sin((x+seed)/3)*amp*0.4;
+      d += `L${x} ${y.toFixed(1)} `;
+    }
+    return `<svg viewBox="0 0 200 34"><path d="${d}" fill="none" stroke="#f5b435" stroke-width="1.4"/></svg>`;
+  }
+  let html='';
+  for(let i=0;i<8;i++) html += wig(i*30) + '<span style="margin-right:18px;color:#4a5b6d;">EARLY WARNING SEISMOGRAPH — P波検知 → S波推定 → 緊急速報</span>';
+  document.getElementById('tapeStrip').innerHTML = html+html;
+})();
+
+/* =========================================================================
+   TAB 1: SIMULATOR
+   ========================================================================= */
+const slVp=document.getElementById('slVp'), slVs=document.getElementById('slVs'),
+      slDist=document.getElementById('slDist'), slT=document.getElementById('slT');
+
+function drawSimGraph(){
+  const Vp=+slVp.value, Vs=+slVs.value, D=+slDist.value, T=+slT.value;
+  document.getElementById('lblVp').textContent = Vp+' km/s';
+  document.getElementById('lblVs').textContent = Vs+' km/s';
+  document.getElementById('lblDist').textContent = D+' km';
+  document.getElementById('lblT').textContent = T+' 秒';
+
+  const tP = D/Vp, tS = D/Vs, dur = tS-tP;
+  document.getElementById('roPArrive').textContent = tP.toFixed(1)+' 秒後';
+  document.getElementById('roSArrive').textContent = tS.toFixed(1)+' 秒後';
+  document.getElementById('roDur').textContent = dur.toFixed(1)+' 秒';
+  document.getElementById('roDist').textContent = D+' km';
+
+  // graph geometry
+  const W=460,H=300, padL=50,padR=16,padT=16,padB=36;
+  const maxT = Math.max(50, tS*1.15, 45);
+  const maxD = Math.max(320, D*1.15);
+  const xOf = t => padL + (t/maxT)*(W-padL-padR);
+  const yOf = d => H-padB - (d/maxD)*(H-padT-padB);
+
+  let svg = '';
+  // axes
+  svg += `<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#3a4b5c" stroke-width="1"/>`;
+  svg += `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#3a4b5c" stroke-width="1"/>`;
+  svg += `<text x="${padL-6}" y="${padT+8}" fill="#93a2b3" font-size="10" text-anchor="end">km</text>`;
+  svg += `<text x="${W-padR}" y="${H-padB+18}" fill="#93a2b3" font-size="10" text-anchor="end">秒</text>`;
+
+  // P/S lines from origin
+  svg += `<line x1="${xOf(0)}" y1="${yOf(0)}" x2="${xOf(maxT)}" y2="${yOf(Vp*maxT)}" stroke="#f5b435" stroke-width="2"/>`;
+  svg += `<line x1="${xOf(0)}" y1="${yOf(0)}" x2="${xOf(maxT)}" y2="${yOf(Vs*maxT)}" stroke="#ef5b48" stroke-width="2"/>`;
+
+  // horizontal distance marker + band between waves at D
+  const y_D = yOf(D);
+  svg += `<line x1="${padL}" y1="${y_D}" x2="${xOf(tS)}" y2="${y_D}" stroke="#3a4b5c" stroke-dasharray="4 3"/>`;
+  svg += `<rect x="${xOf(tP)}" y="${y_D-2}" width="${xOf(tS)-xOf(tP)}" height="4" fill="#33c7b0" opacity="0.9"/>`;
+  svg += `<circle cx="${xOf(tP)}" cy="${y_D}" r="4" fill="#f5b435"/>`;
+  svg += `<circle cx="${xOf(tS)}" cy="${y_D}" r="4" fill="#ef5b48"/>`;
+  svg += `<text x="${padL+2}" y="${y_D-6}" fill="#93a2b3" font-size="10">${D}km</text>`;
+
+  // moving time cursor
+  if(T<=maxT){
+    const xT = xOf(T);
+    svg += `<line x1="${xT}" y1="${padT}" x2="${xT}" y2="${H-padB}" stroke="#e7ecf2" stroke-width="1" stroke-dasharray="2 3"/>`;
+    const arrivedP = T>=tP, arrivedS = T>=tS;
+    svg += `<circle cx="${xT}" cy="${yOf(Math.min(T*Vp, maxD))}" r="3.5" fill="${arrivedP?'#f5b435':'#5a6b7c'}"/>`;
+    svg += `<circle cx="${xT}" cy="${yOf(Math.min(T*Vs, maxD))}" r="3.5" fill="${arrivedS?'#ef5b48':'#5a6b7c'}"/>`;
+  }
+  // legend
+  svg += `<text x="${W-140}" y="${padT+14}" fill="#f5b435" font-size="11" font-weight="bold">━ P波 (初期微動)</text>`;
+  svg += `<text x="${W-140}" y="${padT+30}" fill="#ef5b48" font-size="11" font-weight="bold">━ S波 (主要動)</text>`;
+
+  document.getElementById('simGraph').setAttribute('viewBox',`0 0 ${W} ${H}`);
+  document.getElementById('simGraph').innerHTML = svg;
+}
+[slVp,slVs,slDist,slT].forEach(el=>el.addEventListener('input', drawSimGraph));
+drawSimGraph();
+
+/* =========================================================================
+   SCENARIO GENERATOR (shared by learn-examples, drill, test)
+   Uses D = n * Vp * Vs so all times/durations are guaranteed integers.
+   ========================================================================= */
+function genScenario(){
+  const Vp = choice([6,7,8,9,10,12]);
+  let vsOptions = [2,3,4,5,6].filter(v=>v<Vp && Vp%1===0 && (Vp-v)>0);
+  const Vs = choice(vsOptions.length?vsOptions:[Math.max(2,Vp-4)]);
+  // pick 3 distinct small multipliers keeping D <= ~300km
+  const maxN = Math.max(3, Math.floor(300/(Vp*Vs)));
+  let pool = [];
+  for(let i=1;i<=Math.min(maxN,9);i++) pool.push(i);
+  if(pool.length<3) pool=[1,2,3];
+  // shuffle & take 3 distinct, sort ascending
+  pool = pool.sort(()=>Math.random()-0.5).slice(0,3).sort((a,b)=>a-b);
+  const [n1,n2,n3] = pool;
+  const T0 = {h:rnd(1,11), m:rnd(0,59), s:choice([0,5,10,15,20,25,30,35,40,45,50,55])};
+
+  function point(n){
+    const D = n*Vp*Vs;
+    const tP = n*Vs, tS = n*Vp;
+    return {
+      n, D, tP, tS, dur: tS-tP,
+      Pclock: addSeconds(T0, tP),
+      Sclock: addSeconds(T0, tS),
+    };
+  }
+  return {Vp, Vs, T0, A:point(n1), B:point(n2), C:point(n3)};
+}
+
+/* =========================================================================
+   TAB 2: EXPLANATION (static worked examples using a fixed nice scenario per pattern)
+   ========================================================================= */
+const methodBodyEl = document.getElementById('methodBody');
+document.querySelectorAll('#methodTabs button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('#methodTabs button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderMethod(+b.dataset.m);
+  });
+});
+
+function renderMethod(m){
+  // fixed example scenario for consistent teaching illustration
+  const ex = {Vp:8, Vs:4, T0:{h:6,m:12,s:0},
+    A:{n:15, D:120, tP:15*4, tS:15*8, dur:60, Pclock:{h:6,m:12,s:20}, Sclock:{h:6,m:12,s:35}},
+    B:{n:20, D:160, tP:80, tS:160, dur:80, Pclock:{h:6,m:12,s:25}, Sclock:{h:6,m:12,s:45}},
+    C:{n:30, D:240, tP:120, tS:240, dur:120, Pclock:{h:6,m:12,s:35}, Sclock:{h:6,m:13,s:5}}
+  };
+  let html='';
+  if(m===1){
+    html = `
+    <p class="subtext">震源から離れた2つの観測地点の「距離の差」と「到着時刻の差」がわかれば、速さ ＝ 距離 ÷ 時間 の考え方で波の速さを求められます。</p>
+    <table class="example-table">
+      <tr><th>震源からの距離</th><td class="mono">${ex.A.D} km</td><td class="mono">${ex.B.D} km</td></tr>
+      <tr><th>初期微動が始まった時刻(P波)</th><td class="mono">${fmtClock(ex.A.Pclock)}</td><td class="mono">${fmtClock(ex.B.Pclock)}</td></tr>
+      <tr><th>主要動が始まった時刻(S波)</th><td class="mono">${fmtClock(ex.A.Sclock)}</td><td class="mono">${fmtClock(ex.B.Sclock)}</td></tr>
+    </table>
+    <div class="solution-box">
+      距離の差：${ex.B.D} − ${ex.A.D} ＝ ${ex.B.D-ex.A.D} km<br>
+      <b>P波の速さ</b><br>
+      <span class="eq">P波の時刻の差：${ex.B.tP-ex.A.tP} 秒</span>
+      <span class="eq">${ex.B.D-ex.A.D}km ÷ ${ex.B.tP-ex.A.tP}秒 ＝ <b style="color:var(--amber)">${ex.Vp} km/s</b></span>
+      <b>S波の速さ</b><br>
+      <span class="eq">S波の時刻の差：${ex.B.tS-ex.A.tS} 秒</span>
+      <span class="eq">${ex.B.D-ex.A.D}km ÷ ${ex.B.tS-ex.A.tS}秒 ＝ <b style="color:var(--coral)">${ex.Vs} km/s</b></span>
+    </div>`;
+  } else if(m===2){
+    html = `
+    <p class="subtext">地震発生時刻を求めるには、①まず波の速さを求め→②震源から観測点までかかった時間を求め→③観測時刻からその時間をひく、の3ステップで求めます。</p>
+    <table class="example-table">
+      <tr><th>震源からの距離</th><td class="mono">${ex.A.D} km</td><td class="mono">${ex.B.D} km</td></tr>
+      <tr><th>初期微動が始まった時刻(P波)</th><td class="mono">${fmtClock(ex.A.Pclock)}</td><td class="mono">${fmtClock(ex.B.Pclock)}</td></tr>
+    </table>
+    <div class="solution-box">
+      <span class="eq">① P波の速さ：(${ex.B.D}-${ex.A.D})km ÷ (${ex.B.tP-ex.A.tP})秒 ＝ ${ex.Vp} km/s</span>
+      <span class="eq">② 震源からA地点までにかかった時間：${ex.A.D}km ÷ ${ex.Vp}km/s ＝ ${ex.A.tP}秒</span>
+      <span class="eq">③ 地震発生時刻：${fmtClock(ex.A.Pclock)} − ${ex.A.tP}秒 ＝ <b style="color:var(--amber)">${fmtClock(ex.T0)}</b></span>
+    </div>`;
+  } else if(m===3){
+    html = `
+    <p class="subtext">初期微動継続時間（P波が届いてからS波が届くまでの時間）は、震源からの<b>距離に比例</b>します。2地点の関係がわかれば、比例式でほかの地点の継続時間も求められます。</p>
+    <table class="example-table">
+      <tr><th>震源からの距離</th><td class="mono">${ex.A.D} km</td><td class="mono">${ex.B.D} km</td><td class="mono">${ex.C.D} km</td></tr>
+      <tr><th>初期微動継続時間</th><td class="mono">${ex.A.dur} 秒</td><td class="mono">${ex.B.dur} 秒</td><td class="mono">？</td></tr>
+    </table>
+    <div class="solution-box">
+      <span class="eq">距離の比：${ex.A.D} : ${ex.C.D}</span>
+      <span class="eq">継続時間の比：${ex.A.dur} : x</span>
+      <span class="eq">${ex.A.D} : ${ex.C.D} ＝ ${ex.A.dur} : x</span>
+      <span class="eq">x ＝ ${ex.A.dur} × (${ex.C.D}÷${ex.A.D}) ＝ <b style="color:var(--teal)">${ex.C.dur} 秒</b></span>
+    </div>`;
+  } else {
+    html = `
+    <p class="subtext">距離と継続時間が比例することを使い、「距離 : 距離 ＝ 時間 : 時間」の比例式を作れば、逆に継続時間から距離を求めることもできます。</p>
+    <table class="example-table">
+      <tr><th>震源からの距離</th><td class="mono">${ex.A.D} km</td><td class="mono">？</td></tr>
+      <tr><th>初期微動継続時間</th><td class="mono">${ex.A.dur} 秒</td><td class="mono">${ex.C.dur} 秒</td></tr>
+    </table>
+    <div class="solution-box">
+      <span class="eq">比例式：${ex.A.D} : x ＝ ${ex.A.dur} : ${ex.C.dur}</span>
+      <span class="eq">x ＝ ${ex.A.D} × (${ex.C.dur}÷${ex.A.dur}) ＝ <b style="color:var(--teal)">${ex.C.D} km</b></span>
+    </div>`;
+  }
+  methodBodyEl.innerHTML = html;
+}
+renderMethod(1);
+
+/* =========================================================================
+   QUESTION BUILDERS (shared by drill & test)
+   Returns {tag, tagClass, promptHtml, tableHtml, fields:[{id,label,unit,type,correct}], solutionHtml}
+   ========================================================================= */
+function buildQuestion(pattern){
+  const sc = genScenario();
+  const A=sc.A, B=sc.B, C=sc.C;
+  if(pattern===1){
+    return {
+      tag:'① P波とS波の速さ', tagClass:'p1',
+      promptHtml:`次の表は、ある地震をA・B 2つの地点で観測した記録である。P波とS波の速さをそれぞれ求めなさい。`,
+      tableHtml:`<table class="example-table">
+        <tr><th>観測地点</th><td>A地点</td><td>B地点</td></tr>
+        <tr><th>震源からの距離</th><td class="mono">${A.D} km</td><td class="mono">${B.D} km</td></tr>
+        <tr><th>初期微動が始まった時刻</th><td class="mono">${fmtClock(A.Pclock)}</td><td class="mono">${fmtClock(B.Pclock)}</td></tr>
+        <tr><th>主要動が始まった時刻</th><td class="mono">${fmtClock(A.Sclock)}</td><td class="mono">${fmtClock(B.Sclock)}</td></tr>
+      </table>`,
+      fields:[
+        {id:'vp', label:'P波の速さ', unit:'km/s', type:'num', correct:sc.Vp},
+        {id:'vs', label:'S波の速さ', unit:'km/s', type:'num', correct:sc.Vs},
+      ],
+      solutionHtml:`
+        <span class="eq">距離の差：${B.D}-${A.D} ＝ ${B.D-A.D} km</span>
+        <span class="eq">P波：時刻の差 ${B.tP-A.tP}秒 → ${B.D-A.D}km ÷ ${B.tP-A.tP}秒 ＝ ${sc.Vp} km/s</span>
+        <span class="eq">S波：時刻の差 ${B.tS-A.tS}秒 → ${B.D-A.D}km ÷ ${B.tS-A.tS}秒 ＝ ${sc.Vs} km/s</span>`
+    };
+  }
+  if(pattern===2){
+    return {
+      tag:'② 地震発生時刻', tagClass:'p2',
+      promptHtml:`次の表は、ある地震をA・B 2つの地点で観測した記録である。この地震が発生した時刻を求めなさい。`,
+      tableHtml:`<table class="example-table">
+        <tr><th>観測地点</th><td>A地点</td><td>B地点</td></tr>
+        <tr><th>震源からの距離</th><td class="mono">${A.D} km</td><td class="mono">${B.D} km</td></tr>
+        <tr><th>初期微動が始まった時刻</th><td class="mono">${fmtClock(A.Pclock)}</td><td class="mono">${fmtClock(B.Pclock)}</td></tr>
+      </table>`,
+      fields:[
+        {id:'origin', label:'地震発生時刻', unit:'', type:'time', correct:clockToSec(sc.T0)},
+      ],
+      solutionHtml:`
+        <span class="eq">P波の速さ：(${B.D}-${A.D})km ÷ (${B.tP-A.tP})秒 ＝ ${sc.Vp} km/s</span>
+        <span class="eq">震源からA地点までかかった時間：${A.D}km ÷ ${sc.Vp}km/s ＝ ${A.tP}秒</span>
+        <span class="eq">発生時刻：${fmtClock(A.Pclock)} − ${A.tP}秒 ＝ ${fmtClock(sc.T0)}</span>`
+    };
+  }
+  if(pattern===3){
+    return {
+      tag:'③ 初期微動継続時間', tagClass:'p3',
+      promptHtml:`震源からの距離と初期微動継続時間は比例する。表を見て、C地点の初期微動継続時間を求めなさい。`,
+      tableHtml:`<table class="example-table">
+        <tr><th>震源からの距離</th><td class="mono">${A.D} km</td><td class="mono">${B.D} km</td><td class="mono">${C.D} km</td></tr>
+        <tr><th>初期微動継続時間</th><td class="mono">${A.dur} 秒</td><td class="mono">${B.dur} 秒</td><td class="mono">？</td></tr>
+      </table>`,
+      fields:[
+        {id:'dur3', label:'C地点の初期微動継続時間', unit:'秒', type:'num', correct:C.dur},
+      ],
+      solutionHtml:`
+        <span class="eq">距離の比：${A.D} : ${C.D}</span>
+        <span class="eq">継続時間の比：${A.dur} : x</span>
+        <span class="eq">${A.D} : ${C.D} ＝ ${A.dur} : x → x ＝ ${A.dur} × (${C.D}÷${A.D}) ＝ ${C.dur} 秒</span>`
+    };
+  }
+  // pattern 4
+  return {
+    tag:'④ 比例式', tagClass:'p4',
+    promptHtml:`震源からの距離と初期微動継続時間は比例する。表を見て、C地点の震源からの距離を求めなさい。`,
+    tableHtml:`<table class="example-table">
+      <tr><th>震源からの距離</th><td class="mono">${A.D} km</td><td class="mono">${B.D} km</td><td class="mono">？</td></tr>
+      <tr><th>初期微動継続時間</th><td class="mono">${A.dur} 秒</td><td class="mono">${B.dur} 秒</td><td class="mono">${C.dur} 秒</td></tr>
+    </table>`,
+    fields:[
+      {id:'dist3', label:'C地点の震源からの距離', unit:'km', type:'num', correct:C.D},
+    ],
+    solutionHtml:`
+      <span class="eq">比例式：${A.D} : x ＝ ${A.dur} : ${C.dur}</span>
+      <span class="eq">x ＝ ${A.D} × (${C.dur}÷${A.dur}) ＝ ${C.D} km</span>`
+  };
+}
+
+/* =========================================================================
+   KEYPAD (shared)
+   ========================================================================= */
+let activeInputEl = null;
+function keypadHtml(idPrefix){
+  return `<div class="keypad" id="${idPrefix}_keypad">
+    ${[1,2,3,4,5,6,7,8,9].map(n=>`<button type="button" data-k="${n}">${n}</button>`).join('')}
+    <button type="button" data-k=":">：</button>
+    <button type="button" data-k="0">0</button>
+    <button type="button" class="func" data-k="back">⌫</button>
+    <button type="button" class="func" data-k="clear" style="grid-column:span 3;">クリア</button>
+  </div>`;
+}
+function wireKeypad(idPrefix){
+  const kp = document.getElementById(idPrefix+'_keypad');
+  if(!kp) return;
+  kp.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!activeInputEl) return;
+      const k = btn.dataset.k;
+      if(k==='back'){ activeInputEl.value = activeInputEl.value.slice(0,-1); }
+      else if(k==='clear'){ activeInputEl.value=''; }
+      else{ activeInputEl.value += k; }
+      activeInputEl.focus();
+    });
+  });
+  document.querySelectorAll('.'+idPrefix+'_input').forEach(inp=>{
+    inp.addEventListener('focus', ()=>{ activeInputEl = inp; });
+  });
+  // default focus first input
+  const firstInput = document.querySelector('.'+idPrefix+'_input');
+  if(firstInput) activeInputEl = firstInput;
+}
+
+function fieldInputHtml(f, idPrefix){
+  const ph = f.type==='time' ? '例) 6:12:20' : '数値';
+  return `<span class="field-row" style="display:inline-flex; align-items:center;">
+    <span style="font-size:13px;color:var(--ink-dim);margin-right:6px;">${f.label}：</span>
+    <input class="answer-field ${idPrefix}_input" data-fid="${f.id}" placeholder="${ph}" inputmode="numeric" autocomplete="off">
+    <span class="answer-unit">${f.unit}</span>
+  </span>`;
+}
+
+function gradeFields(q, idPrefix, container){
+  let allCorrect = true;
+  let anyCorrect = false;
+  q.fields.forEach(f=>{
+    const el = container.querySelector(`[data-fid="${f.id}"]`);
+    let val;
+    if(f.type==='time') val = parseTimeInput(el.value);
+    else val = parseNumInput(el.value);
+    let ok=false;
+    if(val!==null){
+      if(f.type==='time') ok = (val === f.correct);
+      else ok = approxEq(val, f.correct, 0.05);
+    }
+    el.classList.remove('correct','wrong');
+    el.classList.add(ok?'correct':'wrong');
+    if(ok) anyCorrect=true; else allCorrect=false;
+  });
+  return {allCorrect, anyCorrect};
+}
+
+/* =========================================================================
+   TAB 3: DRILL
+   ========================================================================= */
+let currentDrillQ = null;
+function newDrillQuestion(){
+  const pattern = rnd(1,4);
+  currentDrillQ = buildQuestion(pattern);
+  const area = document.getElementById('drillArea');
+  area.innerHTML = `
+    <div class="qtag ${currentDrillQ.tagClass}">${currentDrillQ.tag}</div>
+    <p style="line-height:1.8;">${currentDrillQ.promptHtml}</p>
+    ${currentDrillQ.tableHtml}
+    <div style="margin-top:14px;">${currentDrillQ.fields.map(f=>fieldInputHtml(f,'drill')).join('')}</div>
+    ${keypadHtml('drill')}
+    <div class="btn-row">
+      <button class="btn" id="drillCheckBtn">こたえ合わせ</button>
+      <button class="btn secondary" id="drillNextBtn">つぎの問題 →</button>
+    </div>
+    <div class="feedback-banner" id="drillFeedback"></div>
+    <div id="drillSolution"></div>
+  `;
+  wireKeypad('drill');
+  document.getElementById('drillCheckBtn').addEventListener('click', checkDrill);
+  document.getElementById('drillNextBtn').addEventListener('click', newDrillQuestion);
+}
+function checkDrill(){
+  const area = document.getElementById('drillArea');
+  const {allCorrect} = gradeFields(currentDrillQ, 'drill', area);
+  const fb = document.getElementById('drillFeedback');
+  fb.className = 'feedback-banner show ' + (allCorrect?'ok':'ng');
+  fb.textContent = allCorrect ? '✅ 正解！ +10ポイント' : '❌ おしい！下の解説を確認しよう';
+  const solDiv = document.getElementById('drillSolution');
+  solDiv.innerHTML = `<hr class="line"><div class="solution-box"><b>【解説】</b><br>${currentDrillQ.solutionHtml}</div>`;
+  if(allCorrect){
+    addPoints(10);
+    // extract pattern number from tagClass e.g. 'p1'->1
+    const patNum = +currentDrillQ.tagClass.replace('p','');
+    registerCorrect(patNum);
+    flushBadgePopups(solDiv);
+  }
+}
+newDrillQuestion();
+
+/* =========================================================================
+   TAB 4: TEST (5 questions, mixed, sequential)
+   ========================================================================= */
+let testQuestions = [], testIndex = 0, testResults = [];
+function startTest(){
+  const patterns = [1,2,3,4, rnd(1,4)].sort(()=>Math.random()-0.5);
+  testQuestions = patterns.map(p=>buildQuestion(p));
+  testIndex = 0; testResults = [];
+  renderTestQuestion();
+}
+function renderTestQuestion(){
+  const area = document.getElementById('testArea');
+  const q = testQuestions[testIndex];
+  let dots='';
+  for(let i=0;i<5;i++){
+    let cls = i<testIndex ? (testResults[i]?'done':'miss') : (i===testIndex?'current':'');
+    dots += `<span class="${cls}"></span>`;
+  }
+  area.innerHTML = `
+    <div class="progress-dots">${dots}</div>
+    <div class="qtag ${q.tagClass}">問題 ${testIndex+1} / 5 ・ ${q.tag}</div>
+    <p style="line-height:1.8;">${q.promptHtml}</p>
+    ${q.tableHtml}
+    <div style="margin-top:14px;">${q.fields.map(f=>fieldInputHtml(f,'test')).join('')}</div>
+    ${keypadHtml('test')}
+    <div class="btn-row">
+      <button class="btn" id="testCheckBtn">${testIndex===4?'さいごの回答をする':'回答する'}</button>
+    </div>
+    <div class="feedback-banner" id="testFeedback"></div>
+  `;
+  wireKeypad('test');
+  document.getElementById('testCheckBtn').addEventListener('click', submitTestAnswer);
+}
+function submitTestAnswer(){
+  const area = document.getElementById('testArea');
+  const q = testQuestions[testIndex];
+  const {allCorrect} = gradeFields(q, 'test', area);
+  testResults[testIndex] = allCorrect;
+  const patNum = +q.tagClass.replace('p','');
+  if(allCorrect) registerCorrect(patNum);
+  const fb = document.getElementById('testFeedback');
+  fb.className = 'feedback-banner show ' + (allCorrect?'ok':'ng');
+  fb.textContent = allCorrect ? '✅ 正解！' : '❌ 不正解…';
+  document.getElementById('testCheckBtn').disabled = true;
+  setTimeout(()=>{
+    testIndex++;
+    if(testIndex>=5) showTestResults();
+    else renderTestQuestion();
+  }, 900);
+}
+function showTestResults(){
+  const correctCount = testResults.filter(Boolean).length;
+  const pct = Math.round(correctCount/5*100);
+  let rank, comment, rankColor;
+  if(correctCount===5){ rank='S'; comment='パーフェクト！地震計算はもう完璧だね。先生も驚きの正確さです。'; rankColor='var(--amber)'; }
+  else if(correctCount===4){ rank='A'; comment='素晴らしい出来！あと一歩で満点。間違えた問題を解説で確認しよう。'; rankColor='var(--teal)'; }
+  else if(correctCount===3){ rank='B'; comment='基本はしっかり身についています。苦手なパターンをドリルで復習しよう。'; rankColor='#9db4ff'; }
+  else if(correctCount===2){ rank='C'; comment='考え方はつかめてきています。②解説タブをもう一度見直してみよう。'; rankColor='#ffb2a6'; }
+  else{ rank='D'; comment='焦らずタブ①②で基礎から確認しよう。地震計算は「速さ＝距離÷時間」がすべての基本です。'; rankColor='var(--coral)'; }
+
+  addPoints(correctCount*15);
+  if(correctCount===5){ STATE._perfectTest = true; }
+  checkBadges();
+
+  const area = document.getElementById('testArea');
+  area.innerHTML = `
+    <div class="rank-badge" style="border-color:${rankColor}; color:${rankColor};">${rank}</div>
+    <h2 style="text-align:center;">${correctCount} / 5 問正解（${pct}点）</h2>
+    <p style="text-align:center; color:var(--ink-dim); max-width:520px; margin:10px auto;">${comment}</p>
+    <div class="btn-row" style="justify-content:center;">
+      <button class="btn" id="retryTestBtn">もう一度テストする</button>
+    </div>
+    <hr class="line">
+    <h3 style="margin-bottom:10px;">🏅 バッジコレクション</h3>
+    <div class="badge-list">
+      ${BADGE_DEFS.map(b=>`
+        <div class="badge-card ${STATE.badges.includes(b.id)?'unlocked':''}">
+          <span class="ic">${b.icon}</span>
+          <b>${b.name}</b><br>${b.desc}
+        </div>`).join('')}
+    </div>
+    <div id="testBadgePopups"></div>
+  `;
+  flushBadgePopups(document.getElementById('testBadgePopups'));
+  document.getElementById('retryTestBtn').addEventListener('click', startTest);
+}
+startTest();
+
+/* init header */
+renderHeaderStats();
+</script>
+</body>
+</html>
